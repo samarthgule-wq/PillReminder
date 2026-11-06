@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: pillreminder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pilladmin
+      POSTGRES_PASSWORD: change_this_local_password
+      POSTGRES_DB: pillreminder
+    ports:
+      - "5432:5432"
+    volumes:
+      - pillreminder_data:/var/lib/postgresql/data
+
+volumes:
+  pillreminder_data:

@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Role models
+model User {
+  id           String          @id
+  email        String          @unique
+  fullName     String
+  role         String          // "patient" | "doctor" | "pharmacy" | "guardian"
+  phone        String?
+  avatarLetter String?
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  patientProfile PatientProfile?
+  conversations  AiConversation[]
+
+  @@map("users")
+}
+
+model PatientProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  age               Int
+  gender            String
+  bloodGroup        String
+  allergies         String[]
+  chronicConditions String[]
+  adherenceRate     Float    @default(90.0)
+  emergencyContact  String?
+  lastConsultation  String?
+  nextFollowUp      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("patient_profiles")
+}
+
+// Clinical Prescriptions
+model Prescription {
+  id                 String             @id
+  prescriptionNumber String             @unique
+  patientId          String
+  patientName        String
+  patientAge         Int                @default(64)
+  patientGender      String             @default("Male")
+  doctorId           String
+  doctorName         String
+  doctorSpecialty    String
+  clinicOrHospital   String
+  diagnosis          String
+  status             String             @default("Active") // "Active" | "Completed" | "Cancelled" | "Draft"
+  createdAt          DateTime           @default(now())
+  expiresAt          DateTime?
+  doctorNotes        String?
+  items              PrescriptionItem[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String       @id
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicineName   String
+  strength       String
+  dosage         String
+  frequency      String
+  durationDays   Int
+  startDate      String
+  instructions   String
+  reminderTimes  String[]
+  notes          String?
+
+  @@map("prescription_items")
+}
+
+// Reminders & Adherence Logs
+model MedicationReminder {
+  id                String    @id
+  patientId         String
+  prescriptionId    String?
+  medicineName      String
+  strength          String
+  dosage            String
+  scheduledTime     String
+  timeSlot          String    // "Morning" | "Afternoon" | "Evening" | "Night"
+  instructions      String
+  status            String    @default("pending") // "pending" | "taken" | "snoozed" | "skipped" | "overdue"
+  acknowledgedAt    DateTime?
+  prescribingDoctor String?
+  remainingDays     Int       @default(30)
+  scheduledDate     String    // YYYY-MM-DD
+  createdAt         DateTime  @default(now())
+
+  @@index([patientId, scheduledDate])
+  @@map("medication_reminders")
+}
+
+model MedicationHistory {
+  id              String   @id
+  patientId       String
+  medicineName    String
+  dosage          String
+  scheduledTime   String
+  action          String   // "taken" | "snoozed" | "skipped"
+  actionTimestamp DateTime @default(now())
+  selfReported    Boolean  @default(true)
+  notes           String?
+
+  @@index([patientId, actionTimestamp])
+  @@map("medication_history")
+}
+
+// Pharmacy
+model PharmacyInventory {
+  id                   String   @id
+  pharmacyId           String
+  medicineName         String
+  brand                String
+  strength             String
+  form                 String
+  quantity             Int
+  price                Float
+  expiryDate           String
+  isAvailable          Boolean  @default(true)
+  requiresPrescription Boolean  @default(true)
+  batchNumber          String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([pharmacyId, medicineName])
+  @@map("pharmacy_inventory")
+}
+
+model PharmacyOrder {
+  id                String   @id
+  pharmacyId        String
+  orderNumber       String   @unique
+  patientId         String?
+  patientName       String
+  patientContact    String
+  prescriptionRef   String?
+  medicines         Json
+  totalAmount       Float
+  paymentStatus     String   // "Paid Online" | "Pay on Pickup" | "Pending"
+  fulfillmentStatus String   // "Pending Verification" | "Pharmacist Review" | "Ready for Pickup" | "Out for Delivery" | "Fulfilled" | "Cancelled"
+  deliveryType      String   // "Store Pickup" | "Home Delivery"
+  orderDate         String
+  pharmacistNotes   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([pharmacyId, fulfillmentStatus])
+  @@map("pharmacy_orders")
+}
+
+// Family Guardian Consent Links
+model GuardianLink {
+  id                 String   @id
+  guardianId         String
+  patientId          String
+  patientName        String
+  relationship       String
+  consentGranted     Boolean  @default(true)
+  consentLevel       String   // "Full Medication Overview" | "Adherence & Alerts Only" | "Emergency Notification Only"
+  consentGrantedDate String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([guardianId, patientId])
+  @@map("guardian_links")
+}
+
+// Persistent AI Conversations & Messages
+model AiConversation {
+  id        String      @id @default(uuid())
+  userId    String
+  userRole  String      // "patient" | "doctor" | "pharmacy" | "guardian"
+  title     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  user      User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AiMessage[]
+
+  @@index([userId, userRole])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // "user" | "model" | "system"
+  content        String
+  toolCalls      Json?          // Function calls requested by model
+  toolResults    Json?          // Function results returned by backend tools
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
+}
