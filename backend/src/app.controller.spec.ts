@@ -35,12 +35,20 @@ describe('AppController', () => {
   describe('health', () => {
     it('should return health status payload', async () => {
       const response = await appController.getHealth();
-      expect(response).toEqual({
-        application: 'PillReminder',
-        status: 'running',
-        database: 'connected',
-        message: 'Welcome to PillReminder API!',
-      });
+      expect(response.application).toBe('PillReminder');
+      expect(response.status).toBe('running');
+      expect(response.database).toBe('connected');
+      expect(response.message).toBe('PillReminder API is healthy');
+      expect(typeof response.timestamp).toBe('string');
+    });
+
+    it('should return 503 status when database is disconnected', async () => {
+      prismaService.checkHealth = vi.fn().mockResolvedValue(false);
+      const mockRes = { status: vi.fn() } as any;
+      const response = await appController.getHealth(mockRes);
+      expect(mockRes.status).toHaveBeenCalledWith(503);
+      expect(response.status).toBe('degraded');
+      expect(response.database).toBe('disconnected');
     });
   });
 });

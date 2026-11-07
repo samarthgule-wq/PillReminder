@@ -3,8 +3,9 @@ import { PrismaService } from './prisma/prisma.service.js';
 
 export interface HealthResponse {
   application: string;
-  status: string;
-  database: string;
+  status: 'running' | 'degraded' | 'down';
+  database: 'connected' | 'disconnected' | 'error';
+  timestamp: string;
   message: string;
 }
 
@@ -20,9 +21,12 @@ export class AppService {
     const isDbConnected = await this.prisma.checkHealth();
     return {
       application: 'PillReminder',
-      status: 'running',
+      status: isDbConnected ? 'running' : 'degraded',
       database: isDbConnected ? 'connected' : 'disconnected',
-      message: 'Welcome to PillReminder API!',
+      timestamp: new Date().toISOString(),
+      message: isDbConnected
+        ? 'PillReminder API is healthy'
+        : 'PostgreSQL database connection unavailable',
     };
   }
 }

@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { AppService, HealthResponse } from './app.service.js';
 
 @Controller()
@@ -11,7 +12,11 @@ export class AppController {
   }
 
   @Get('health')
-  async getHealth(): Promise<HealthResponse> {
-    return this.appService.getHealth();
+  async getHealth(@Res({ passthrough: true }) res?: Response): Promise<HealthResponse> {
+    const health = await this.appService.getHealth();
+    if (res) {
+      res.status(health.database === 'connected' ? 200 : 503);
+    }
+    return health;
   }
 }
