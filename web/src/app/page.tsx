@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -145,7 +145,7 @@ export default function HomePage() {
     {
       step: '02',
       title: 'Patient Receives Prescription',
-      desc: 'The approved digital prescription appears instantly in the patient’s PillReminder account with complete clinical notes.',
+      desc: 'The approved digital prescription appears instantly in the patientâ€™s PillReminder account with complete clinical notes.',
     },
     {
       step: '03',
@@ -382,7 +382,7 @@ export default function HomePage() {
                 <p className="text-xs text-slate-300 max-w-xl mt-0.5">
                   The frontend is integrated with the running NestJS backend at{' '}
                   <code className="text-blue-300 font-mono text-[11px] bg-blue-900/40 px-1.5 py-0.5 rounded">
-                    http://localhost:4000
+                    {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
                   </code>{' '}
                   and PostgreSQL database container.
                 </p>
@@ -406,3 +406,4 @@ export default function HomePage() {
     </div>
   );
 }
+

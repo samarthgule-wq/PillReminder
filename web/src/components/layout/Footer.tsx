@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import { Pill, Shield, Heart, ExternalLink } from 'lucide-react';
 
@@ -108,7 +108,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="http://localhost:4000/health"
+                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/health`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 hover:text-blue-400 transition"
@@ -136,3 +136,4 @@ export function Footer() {
     </footer>
   );
 }
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchBackendHealth } from '@/services/health';
@@ -105,7 +105,7 @@ export function BackendStatusBadge({ compact = false }: { compact?: boolean }) {
 
         {!compact && (
           <span className="text-[10px] text-slate-500 ml-0.5 border-l border-slate-300 pl-1">
-            :4000
+            API
           </span>
         )}
       </div>
@@ -134,7 +134,7 @@ export function BackendStatusBadge({ compact = false }: { compact?: boolean }) {
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Target Endpoint:</span>
               <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-700">
-                http://localhost:4000/health
+                {`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/health`}
               </code>
             </div>
 
@@ -190,3 +190,5 @@ export function BackendStatusBadge({ compact = false }: { compact?: boolean }) {
     </div>
   );
 }
+
+
