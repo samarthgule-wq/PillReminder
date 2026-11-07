@@ -1,26 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
-// Load environment variables from .env
+// Load local environment variables when available
 try {
   process.loadEnvFile();
 } catch {
-  // Fallback if .env does not exist or environment is already populated
+  // Render provides environment variables directly
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for frontend applications
+  // Allow requests from the configured frontend
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+    : ['http://localhost:3000'];
+
   app.enableCors({
-    origin: true, // Allow all origins in local development (or explicitly http://localhost:3000)
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
-  await app.listen(port);
-  console.log(`PillReminder backend is running at http://localhost:${port}`);
+  const port = Number(process.env.PORT) || 4000;
+
+  // Render requires the application to listen on 0.0.0.0
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`PillReminder backend is running on port ${port}`);
 }
 
 await bootstrap();
